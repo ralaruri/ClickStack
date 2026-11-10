@@ -1375,7 +1375,7 @@ describe('Metadata', () => {
       const sql = calls[calls.length - 1][0].query as string;
 
       expect(sql).toContain('mergeTreeTextIndex(');
-      expect(sql).toContain('groupUniqArray(');
+      expect(sql).toContain('topKWeighted(');
       expect(sql).toContain('GROUP BY key');
       expect(sql).not.toContain('startsWith(token,');
     });
@@ -1775,9 +1775,8 @@ describe('Metadata', () => {
     // via text index or raw scan.
     describe('maxValuesPerKey threading', () => {
       // Pick a value that (a) isn't ambient in the test setup (like 20,
-      // dates, or granularity numbers) and (b) is easy to spot in a param
-      // dump when a test fails. Int32 chSql params render as numbers, so
-      // assertions compare against the numeric literal.
+      // dates, or granularity numbers) and (b) is easy to spot in the SQL or a
+      // param dump when a test fails.
       const MAX_VALUES = 7777;
 
       it('threads maxValuesPerKey into the map text-index query', async () => {
@@ -1797,11 +1796,9 @@ describe('Metadata', () => {
             c[0].query.includes('startsWith(token,'),
         );
         expect(mapTextIndexCall).toBeDefined();
-        const params = mapTextIndexCall![0].query_params as Record<
-          string,
-          unknown
-        >;
-        expect(Object.values(params)).toContain(MAX_VALUES);
+        expect(mapTextIndexCall![0].query).toContain(
+          `topKWeighted(${MAX_VALUES})(`,
+        );
       });
 
       it('threads maxValuesPerKey into the native text-index query', async () => {
@@ -1822,11 +1819,9 @@ describe('Metadata', () => {
             !c[0].query.includes('startsWith(token,'),
         );
         expect(nativeTextIndexCall).toBeDefined();
-        const params = nativeTextIndexCall![0].query_params as Record<
-          string,
-          unknown
-        >;
-        expect(Object.values(params)).toContain(MAX_VALUES);
+        expect(nativeTextIndexCall![0].query).toContain(
+          `topKWeighted(${MAX_VALUES})(token, cardinality)`,
+        );
       });
 
       it('threads maxValuesPerKey into the raw-table getKeyValues fallback', async () => {
