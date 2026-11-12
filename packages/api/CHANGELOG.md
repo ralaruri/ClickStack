@@ -1,5 +1,32 @@
 # @hyperdx/api
 
+## 2.45.0
+
+### Minor Changes
+
+- 2d17de5d7: feat: serve PromQL label lookups from ClickHouse's Prometheus HTTP API
+
+  On ClickHouse 26.9+ with the `prometheus_api_v1` handler, `/labels` and `/label/:name/values` for a ClickHouse-backed PromQL source now proxy to the handler instead of querying the TimeSeries tags table with SQL. Older servers, servers without the handler, and sources set to `table-function` keep the SQL path, so a source that runs queries over HTTP on 26.6-26.8 still gets label autocomplete.
+
+- db4e7ba67: chore: upgrade bundled ClickHouse to 26.10.3.7
+
+  The all-in-one image and the Docker Compose files now use
+  `clickhouse/clickhouse-server:26.10.3.7-alpine`. New TimeSeries tables default
+  to schema version 8, which keeps each series' time range in a separate inner
+  table; existing tables keep their layout. `system.metric_log` switches to the
+  bucketed schema, and rows from before the upgrade move to `system.metric_log_0`.
+
+### Patch Changes
+
+- 7b03880eb: feat: read the MCP PromQL label catalog from ClickHouse's Prometheus HTTP API
+
+  `describe_source` on a ClickHouse-backed PromQL source now lists label and metric names through the `prometheus_api_v1` handler on ClickHouse 26.9+, and falls back to SQL on older servers, servers without the handler, and sources set to `table-function`.
+
+- ac913ceb3: feat: Choose how a PromQL source on ClickHouse is evaluated (the Prometheus HTTP API or the `prometheusQuery` table functions) instead of probing the server on every query. Without a choice the server is still probed, but the answer is now kept for 5 minutes. A source set to the HTTP API against a server that does not serve it fails with a clear error. Onboarding pins a PromQL source it detects to the HTTP API when the server serves it.
+- Updated dependencies [2d17de5d7]
+- Updated dependencies [ac913ceb3]
+  - @hyperdx/common-utils@0.35.0
+
 ## 2.44.0
 
 ### Minor Changes
