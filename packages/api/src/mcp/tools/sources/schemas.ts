@@ -454,10 +454,10 @@ const mcpSaveSourceSchema = z.object({
     .min(1)
     .optional()
     .describe(
-      'Log and trace sources. How many data parts Map attribute key discovery ' +
-        'reads from a text index, picked around the median part size. Raise it ' +
-        'if attribute keys are missing from filters; lower it if field loading ' +
-        'is slow. Omit for the default of 20.',
+      'Log and trace sources. How many data parts are read from text indexes ' +
+        'to discover attribute keys and filter values, picked around the ' +
+        'median part size. Raise it if keys or values are missing from ' +
+        'filters; lower it if they load slowly. Omit for the default of 20.',
     ),
 });
 

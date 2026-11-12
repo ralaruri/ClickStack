@@ -415,7 +415,7 @@ function formatExternalSource(source: SourceDocument) {
  *         mapKeyIndexMaxParts:
  *           type: integer
  *           minimum: 1
- *           description: How many data parts Map attribute key discovery reads from a text index, picked around the median part size. Raise it if attribute keys are missing from filters; lower it if field loading is slow. Defaults to 20.
+ *           description: How many data parts are read from text indexes to discover attribute keys and filter values, picked around the median part size. Raise it if keys or values are missing from filters; lower it if they load slowly. Defaults to 20.
  *           nullable: true
  *           example: 20
  *         highlightedTraceAttributeExpressions:
@@ -622,7 +622,7 @@ function formatExternalSource(source: SourceDocument) {
  *         mapKeyIndexMaxParts:
  *           type: integer
  *           minimum: 1
- *           description: How many data parts Map attribute key discovery reads from a text index, picked around the median part size. Raise it if attribute keys are missing from filters; lower it if field loading is slow. Defaults to 20.
+ *           description: How many data parts are read from text indexes to discover attribute keys and filter values, picked around the median part size. Raise it if keys or values are missing from filters; lower it if they load slowly. Defaults to 20.
  *           nullable: true
  *           example: 20
  *         highlightedTraceAttributeExpressions:

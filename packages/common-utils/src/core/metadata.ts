@@ -65,8 +65,8 @@ import {
 // Between 1e6 - 5e6 is a good range.
 export const DEFAULT_METADATA_MAX_ROWS_TO_READ = 3e6;
 const DEFAULT_MAX_KEYS = 1000;
-// shortcut: keys found only in the smallest or largest parts of the range can
-// be missed; raise it per source (mapKeyIndexMaxParts) if keys go missing.
+// shortcut: keys and values found only in the smallest or largest parts of the
+// range can be missed; raise it per source (mapKeyIndexMaxParts) if they go missing.
 export const DEFAULT_MAP_KEY_INDEX_MAX_PARTS = 20;
 
 // Cap keys per dispatched query: each key is another operation for the db to fetch, and simply fetching all keys at once can be too much for the db to handle.
@@ -106,6 +106,8 @@ type AllKeyValuesQuery = {
   maxValuesPerKey?: number;
   connectionId: string;
   metadataMVs?: MetadataMaterializedViews;
+  /** Parts the text index paths read; see `partsOverlapFilter`. */
+  mapKeyIndexMaxParts?: number;
   dateRange: [Date, Date];
   timestampValueExpression: string;
   signal?: AbortSignal;
@@ -1723,17 +1725,19 @@ export class Metadata {
     tableName,
     connectionId,
     queryOptions,
+    maxParts,
     dateRange,
     timestampValueExpression,
     signal,
   }: TableConnection & {
     queryOptions: TextIndexMapColumnQueryOptions;
+    maxParts: number;
     dateRange: [Date, Date];
     timestampValueExpression: string;
     signal?: AbortSignal;
   }): Promise<KeyValues[] | undefined> {
     const queryOptionsHash = objectHash(queryOptions);
-    const cacheKey = `${databaseName}.${tableName}.${connectionId}.${dateRange[0].toString()}.${dateRange[1].toString()}.${queryOptionsHash}.${timestampValueExpression}.getMapTextIndexKeyValues`;
+    const cacheKey = `${databaseName}.${tableName}.${connectionId}.${dateRange[0].toString()}.${dateRange[1].toString()}.${queryOptionsHash}.${maxParts}.${timestampValueExpression}.getMapTextIndexKeyValues`;
     return this.cache.getOrFetch(cacheKey, async () => {
       try {
         const sqlBranches: Array<ChSql> = [];
@@ -1756,6 +1760,7 @@ export class Metadata {
             tableName,
             dateRange,
             timestampValueExpression,
+            maxParts,
           });
           const valueSql = chSql`substring(token, position(token, ${{ String: info.separator }}) + ${{ Int32: info.separator.length }})`;
           const sql = chSql`
@@ -1814,17 +1819,19 @@ export class Metadata {
     tableName,
     connectionId,
     queryOptions,
+    maxParts,
     dateRange,
     timestampValueExpression,
     signal,
   }: TableConnection & {
     queryOptions: TextIndexColumnQueryOptions;
+    maxParts: number;
     dateRange: [Date, Date];
     timestampValueExpression: string;
     signal?: AbortSignal;
   }): Promise<KeyValues[] | undefined> {
     const queryOptionsHash = objectHash(queryOptions);
-    const cacheKey = `${databaseName}.${tableName}.${connectionId}.${dateRange[0].toString()}.${dateRange[1].toString()}.${queryOptionsHash}.${timestampValueExpression}.getTextIndexKeyValues`;
+    const cacheKey = `${databaseName}.${tableName}.${connectionId}.${dateRange[0].toString()}.${dateRange[1].toString()}.${queryOptionsHash}.${maxParts}.${timestampValueExpression}.getTextIndexKeyValues`;
     return this.cache.getOrFetch(cacheKey, async () => {
       try {
         const sqlBranches: Array<ChSql> = [];
@@ -1834,6 +1841,7 @@ export class Metadata {
             tableName,
             dateRange,
             timestampValueExpression,
+            maxParts,
           });
           const sql = chSql`
         SELECT * FROM (
@@ -2893,6 +2901,7 @@ export class Metadata {
     maxValuesPerKey,
     connectionId,
     metadataMVs,
+    mapKeyIndexMaxParts = DEFAULT_MAP_KEY_INDEX_MAX_PARTS,
     dateRange,
     timestampValueExpression,
     signal,
@@ -3012,6 +3021,7 @@ export class Metadata {
           tableName,
           connectionId,
           queryOptions: mapTextIndexQueryOptions,
+          maxParts: mapKeyIndexMaxParts,
           dateRange,
           timestampValueExpression,
           signal,
@@ -3025,6 +3035,7 @@ export class Metadata {
           tableName,
           connectionId,
           queryOptions: nativeTextIndexQueryOptions,
+          maxParts: mapKeyIndexMaxParts,
           dateRange,
           timestampValueExpression,
           signal,

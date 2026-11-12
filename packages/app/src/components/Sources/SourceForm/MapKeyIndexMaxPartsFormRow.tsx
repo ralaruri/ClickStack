@@ -13,7 +13,7 @@ export function MapKeyIndexMaxPartsFormRow({
   return (
     <FormRow
       label="Map key index parts"
-      helpText={`How many data parts are read from a Map key text index to discover attribute keys, picked around the median part size. Raise it if keys are missing from filters; lower it if fields load slowly. Defaults to ${DEFAULT_MAP_KEY_INDEX_MAX_PARTS}.`}
+      helpText={`How many data parts are read from text indexes to discover attribute keys and filter values, picked around the median part size. Raise it if keys or values are missing from filters; lower it if they load slowly. Defaults to ${DEFAULT_MAP_KEY_INDEX_MAX_PARTS}.`}
     >
       <Controller
         control={control}

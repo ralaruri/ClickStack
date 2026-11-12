@@ -577,12 +577,15 @@ export function useMultipleGetKeyValues(
         const source = chartConfig.source
           ? sources?.find(s => s.id === chartConfig.source)
           : undefined;
+        const isLogOrTrace =
+          !!source && (isLogSource(source) || isTraceSource(source));
         const metadataMVs =
           usableMVsOverride ??
-          (source && (isLogSource(source) || isTraceSource(source))
-            ? source.metadataMaterializedViews
-            : undefined);
-        return { chartConfig, source, metadataMVs };
+          (isLogOrTrace ? source.metadataMaterializedViews : undefined);
+        const mapKeyIndexMaxParts = isLogOrTrace
+          ? source.mapKeyIndexMaxParts
+          : undefined;
+        return { chartConfig, source, metadataMVs, mapKeyIndexMaxParts };
       });
 
       if (mode === 'exact') {
@@ -606,18 +609,20 @@ export function useMultipleGetKeyValues(
       }
 
       // mode === 'all'
-      const streams = lookups.map(({ chartConfig, metadataMVs }) =>
-        metadata.streamAllKeyValues({
-          databaseName: chartConfig.from.databaseName,
-          tableName: chartConfig.from.tableName,
-          keyExpressions: limitedKeys,
-          maxValuesPerKey: limit,
-          connectionId: chartConfig.connection,
-          metadataMVs,
-          dateRange: chartConfig.dateRange,
-          timestampValueExpression: chartConfig.timestampValueExpression,
-          signal,
-        }),
+      const streams = lookups.map(
+        ({ chartConfig, metadataMVs, mapKeyIndexMaxParts }) =>
+          metadata.streamAllKeyValues({
+            databaseName: chartConfig.from.databaseName,
+            tableName: chartConfig.from.tableName,
+            keyExpressions: limitedKeys,
+            maxValuesPerKey: limit,
+            connectionId: chartConfig.connection,
+            metadataMVs,
+            mapKeyIndexMaxParts,
+            dateRange: chartConfig.dateRange,
+            timestampValueExpression: chartConfig.timestampValueExpression,
+            signal,
+          }),
       );
       for await (const keyValues of mergeStreams(streams)) {
         yield keyValues.map(({ key, value }) => ({

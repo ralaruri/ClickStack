@@ -1,5 +1,7 @@
 ---
 '@hyperdx/common-utils': patch
+'@hyperdx/api': patch
+'@hyperdx/app': patch
 ---
 
 fix: show values for every key in text index value lookups
@@ -9,3 +11,7 @@ indexes on plain columns) stopped at `max_rows_to_read` with
 `read_overflow_mode = 'break'`. The index is read in sorted token order, so once
 a high-cardinality key used up the budget, every key that sorts after it came
 back with no values and no error. These lookups no longer apply a row cap.
+
+To keep them bounded, they now read only the parts closest to the median size,
+like Map key discovery: 20 by default, or the source's "Map key index parts"
+setting (`mapKeyIndexMaxParts`), which now covers values as well as keys.
